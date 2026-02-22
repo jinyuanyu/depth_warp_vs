@@ -1,0 +1,20 @@
+device: cpu
+infer:
+  amp: false
+  img_size:
+  - 256
+  - 256
+model:
+  grid:
+    align_corners: true
+  refiner:
+    base_ch: 16
+    depth: 3
+    in_ch: 5
+    out_ch: 3
+  residual_flow_net:
+    base_ch: 16
+    in_ch: 5
+  softmax_splat:
+    normalize: true
+    temperature: 10.0

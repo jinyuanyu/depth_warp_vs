@@ -1,0 +1,79 @@
+# depth_warp_vs/configs/default.yaml
+seed: 42
+device: "cuda"
+amp: true
+precision: "fp16"
+
+data:
+  train_dataset: "mannequin"
+  root: "/path/to/MannequinChallenge"
+  split: "train"
+  img_size: [384, 512]
+  resize_keep_aspect: false
+  depth_mode: "auto"                       # auto | metric | normalized
+  depth_scale: 10.0                        # normalized时将0~1乘此值
+  neighbors: [-2, -1, 1, 2]
+  window: 5
+  max_pairs_per_clip: 0
+  use_pose_pnp: true
+  orb_nfeatures: 2000
+  min_depth: 1.0e-3
+  batch_size: 4
+  workers: 4
+
+  # 内参优先级：explicit_K > fx/fy/cx/cy > auto
+  explicit_K: []
+  fx: 0
+  fy: 0
+  cx: 0
+  cy: 0
+
+model:
+  route: "A"
+  softmax_splat:
+    temperature: 30.0
+    normalize: true
+    use_torch_scatter: true
+    occlusion: "hard"          # 新增：默认硬遮挡
+    hard_z_epsilon: 1.0e-3     # 新增：硬遮挡深度容差（米）
+  refiner:
+    in_ch: 3 + 1 + 1
+    out_ch: 3
+    depth: 4
+    base_ch: 32
+  residual_flow_net:
+    in_ch: 3 + 1 + 1
+    base_ch: 32
+  grid:
+    align_corners: true
+
+loss:
+  l1: 1.0
+  ssim: 0.2
+  vgg: 0.1
+  tv: 0.05
+  edgeaware: 0.05
+
+optim:
+  name: "adamw"
+  lr: 2.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  warmup_steps: 1000
+  cosine: true
+  max_steps: 200000
+
+log:
+  log_dir: "./runs"
+  ckpt_dir: "./checkpoints"
+  save_interval: 2000
+  val_interval: 5000
+  resume: ""
+  pretrained: ""
+
+infer:
+  img_size: [512, 512]
+  amp: true
+  use_softsplat: true
+  temperature: 30.0
+  ckpt: "./checkpoints/routea_latest.pth"

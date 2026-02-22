@@ -1,0 +1,13 @@
+device: "cuda"
+amp: true
+img_size: [512, 512]
+use_softsplat: true
+temperature: 30.0
+normalize: true
+align_corners: true
+ckpt: "./checkpoints/routea_latest.pth"
+# 新增：推理时默认硬遮挡
+model:
+  softmax_splat:
+    occlusion: "hard"
+    hard_z_epsilon: 1.0e-3

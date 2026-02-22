@@ -1,0 +1,25 @@
+# depth_warp_vs/configs/infer_refiner_mgmi.yaml
+device: "cuda"
+precision: "fp16"
+infer:
+  amp: true
+  img_size: [0, 0]
+  temperature: 30.0
+  ckpt: "./checkpoints/refiner_latest.pth"
+
+model:
+  softmax_splat:
+    occlusion: "hard"
+    hard_z_epsilon: 1.0e-3
+  refiner:
+    type: "MGMI"
+    in_ch: 4
+    out_ch: 3
+    base_ch: 24
+    width_mult: 1.25
+    act: "silu"
+    norm: "bn"
+    aspp_rates: [1,2,4,8]
+    use_se: true
+    depth_enc: [2,2,3]
+    expand: 4

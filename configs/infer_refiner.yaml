@@ -1,0 +1,16 @@
+device: "cuda"
+infer:
+  amp: true
+  img_size: [0, 0]
+  temperature: 30.0
+  ckpt: "./checkpoints/refiner_latest_past.pth"   # 训练好的Refiner权重
+model:
+  refiner:
+    type: "InpaintRefiner"
+    in_ch: 4
+    out_ch: 3
+    depth: 5
+    base_ch: 48
+  softmax_splat:
+    occlusion: "hard"
+    hard_z_epsilon: 1.0e-3

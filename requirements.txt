@@ -1,0 +1,15 @@
+# requirements.txt
+torch>=2.1
+torchvision>=0.16
+numpy
+opencv-python
+PyYAML
+tqdm
+tensorboard
+lpips
+fastapi
+uvicorn
+einops
+scipy
+# 可选加速：安装失败可忽略，代码会自动fallback
+torch-scatter; platform_system!="Windows"  # Windows可自行安装对应whl

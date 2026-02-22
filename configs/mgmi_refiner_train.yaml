@@ -1,0 +1,71 @@
+# depth_warp_vs/configs/mgmi_refiner_train.yaml
+seed: 42
+device: "cuda"
+amp: true
+precision: "fp16"
+
+data:
+  train_dataset: "mannequin_refine"
+  root: "/media/a1/16THDD/Zhan/depth_warp_vs/data/datasets/MannequinChallenge"
+  split: "train"
+  val_split: "validation"    # 新增：验证集split名（可选）
+  test_split: "test"         # 新增：测试集split名（可选）
+  img_size: [360, 640]
+  batch_size: 8
+  workers: 8
+  max_per_clip: 0
+  val_max_batches: 50        # 新增：验证评估批次数上限（可选）
+  test_max_batches: 100      # 新增：测试评估批次数上限（可选）
+  mask_aug:
+    p: 0.6
+    ops: ["dilate","erode","open","close","none"]
+    k: [3,7]
+    iters: [1,2]
+
+model:
+  ema_decay: 0.999
+  refiner:
+    type: "MGMI"
+    in_ch: 5         # 3 + 2（空洞+污染）
+    out_ch: 3
+    base_ch: 24
+    width_mult: 1.25
+    act: "silu"
+    norm: "bn"
+    aspp_rates: [1, 2, 4, 8]
+    use_se: true
+    depth_enc: [2, 2, 3]
+    expand: 4
+
+loss:
+  hole_weight_start: 1.0
+  hole_weight_end: 3.0
+  hole_weight_ramp: 20000
+  pollute_weight: 2.0      # 新增：污染带区域权重
+  valid_weight: 1.0
+  use_charbonnier: true
+  charbonnier_eps: 1.0e-3
+  ssim: 0.2
+  vgg: 0.1
+  tv: 0.0
+  multiscale: [1.0, 0.5]
+  ms_weights: [1.0, 1.0]
+
+optim:
+  lr: 5.0e-3
+  weight_decay: 0.02
+  betas: [0.9, 0.999]
+  warmup_steps: 40000
+  cosine: true
+  max_steps: 200000
+  accum_steps: 2
+  grad_clip_norm: 1.0
+
+log:
+  log_dir: "./depth_warp_vs/runs_refiner"
+  ckpt_dir: "./checkpoints"
+  save_interval: 2000
+  val_interval: 5000
+  resume: ""
+  pretrained: ""
+  meter_interval: 200
