@@ -18,7 +18,7 @@ DATA_ROOT = "./data_dataset"
 SYSTEM_PYTHON_PATH = "/usr/bin/python3"  # <--- 请修改这里
 
 # realtime_d455.py 的绝对路径
-REALTIME_SCRIPT_PATH = "/Users/yjy/Desktop/3DView/Zhan/depth_warp_vs/realtime_d455.py" # <--- 请修改这里
+REALTIME_SCRIPT_PATH = "/Users/yjy/Desktop/3DView/Zhan/depth_warp_vs/tools/depth/realtime_d455.py" # <--- 请修改这里
 
 # 图像参数
 IMAGE_WIDTH = 512

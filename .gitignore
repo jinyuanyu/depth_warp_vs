@@ -29,6 +29,7 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db
+.AppleDouble
 
 # Large files
 *.fbx
@@ -36,3 +37,10 @@ Thumbs.db
 *.pth
 *.ckpt
 checkpoints/
+
+# Local runtime / cache
+.mplconfig/
+workspace/
+
+# Common local experiment outputs
+reduced_core/compare/problem_visualizations/

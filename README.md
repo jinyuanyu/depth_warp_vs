@@ -73,7 +73,7 @@ The method is built around a simple but efficient design:
 ### Additional notes
 
 - [`reduced_core/README_REDUCED.md`](reduced_core/README_REDUCED.md): minimal package notes
-- [`Agent_depth_warp_vs-CN.md`](Agent_depth_warp_vs-CN.md): Chinese technical summary of the current library
+- [`docs/reports/Agent_depth_warp_vs-CN.md`](docs/reports/Agent_depth_warp_vs-CN.md): Chinese technical summary of the current library
 
 ## Repository Layout
 
@@ -81,14 +81,19 @@ The method is built around a simple but efficient design:
 depth_warp_vs/
 ├── README.md
 ├── assets/readme/                  # figures used by this README
+├── assets/raw/                     # large example assets kept out of root
+├── docs/reports/                   # project reports and technical notes
 ├── configs/                        # training / inference configs
 ├── data/                           # datasets, camera tools, refine dataset
 ├── engine/                         # training and evaluation loops
+├── legacy/                         # archived or superseded entry scripts
 ├── models/                         # splatting, refiner, losses, geometry
 ├── reduced_core/                   # minimal warp + refiner + fusion path
 ├── runtime/                        # service / runtime-related code
 ├── scripts/                        # data prep, training, export, demos
+├── tools/                          # analysis, debug, streaming, utility scripts
 ├── third_party/Video-Depth-Anything
+├── workspace/                      # local experiments / large temporary assets
 └── tests/
 ```
 
