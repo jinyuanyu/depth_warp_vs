@@ -1,129 +1,124 @@
 # DepthWarpVS
 
-Depth-guided warp-and-refine pipeline for monocular novel-view synthesis and naked-eye 3D rendering.
+面向单目新视角合成与裸眼 3D 显示的深度引导式 warp-and-refine 管线。
 
-This repository focuses on a practical route:
+本仓库围绕一条务实且可落地的路线展开：先从单张 RGB 图像及其深度图出发，利用深度引导前向投影生成目标视角，再显式定位由遮挡与深度边界误差带来的空洞和污染区域，最后仅对这些不可靠区域进行轻量级掩码引导修复，并将多视图结果融合为适用于柱状透镜等场景的裸眼 3D 输出。
 
-- estimate or provide a monocular depth map
-- forward warp the source view to multiple target views with visibility-aware splatting
-- detect hole / polluted regions caused by occlusion and depth boundary errors
-- refine only these regions with a lightweight mask-guided inpainting network
-- fuse the generated views into a lenticular-style naked-eye 3D output
+当前代码库同时包含两部分内容：
 
-The codebase currently contains both:
+- 完整研究工作区：覆盖训练、数据准备、实验与工具链
+- `reduced_core/` 最小可部署流程：聚焦新视角生成与推理落地
 
-- a full research workspace with training, data preparation, experiments, and utilities
-- a `reduced_core/` minimal pipeline for novel-view generation and deployment-oriented inference
-
-## Overview
+## 方法概览
 
 ![Pipeline Overview](assets/readme/pipeline_overview.png)
 
-The method is built around a simple but efficient design:
+整个方法可以概括为以下 6 个步骤：
 
-1. single-view RGB + depth as input
-2. depth-guided forward splatting to target camera poses
-3. visibility accumulation to localize holes
-4. optional `pollute` band and `valid` mask to explicitly describe unreliable boundaries
-5. MGMI refiner conditioned on warped RGB, masks, and optional human priors
-6. final multi-view fusion for naked-eye 3D output
+1. 输入单视图 RGB 图像及对应深度
+2. 使用深度引导前向 splatting 生成目标相机位姿下的视图
+3. 通过可见性累积定位空洞区域
+4. 使用 `pollute` 带和 `valid` 掩码显式描述边界不可靠区域
+5. 使用 MGMI 细化网络，仅对空洞或污染区域进行修复，可选叠加人体先验
+6. 将生成的多视图进一步融合为裸眼 3D 输出
 
-## Results
+## 结果展示
 
-### Qualitative comparison
+### 定性对比
 
 ![Qualitative Comparison](assets/readme/qualitative_comparison.png)
 
-### Real-time display demo
+### 实时显示示例
 
 ![Realtime Demo](assets/readme/realtime_demo.png)
 
-## Highlights
+## 主要特点
 
-- Depth-guided novel-view synthesis with forward splatting
-- Hard/soft occlusion handling in `softmax_splat`
-- Mask-aware local refinement instead of full-image regeneration
-- Explicit `hole`, `valid`, and `pollute` channels for training/inference consistency
-- Optional human priors: person segmentation, parsing, keypoints
-- Optional boundary sharpening before warp to suppress foreground/background tearing
-- Single image, folder, and video inference modes
-- Research utilities for training, ablation, and left/right-view evaluation
+- 基于深度引导的单目新视角生成
+- 使用前向 splatting 处理多视图重投影
+- 在 `softmax_splat` 中显式处理硬遮挡与软遮挡问题
+- 只对局部空洞区域做修复，而非整图重生成
+- 使用 `hole`、`valid`、`pollute` 三类显式通道保持训练与推理一致
+- 支持可选人体先验：人物分割、人体 parsing、关键点等
+- 可在投影前进行边缘锐化，减弱前景背景撕裂
+- 支持单图、文件夹、视频三种推理模式
+- 保留训练、消融与左右视图评估等研究接口
 
-## What Is In This Repo
+## 仓库中最值得关注的部分
 
-### Core inference path
+### 核心推理路径
 
 - [`reduced_core/depth_warp_vs/main.py`](reduced_core/depth_warp_vs/main.py)
 - [`reduced_core/depth_warp_vs/models/splatting/softmax_splat.py`](reduced_core/depth_warp_vs/models/splatting/softmax_splat.py)
 - [`reduced_core/depth_warp_vs/models/refiner/MGMI.py`](reduced_core/depth_warp_vs/models/refiner/MGMI.py)
 
-### Refiner training path
+### Refiner 训练路径
 
 - [`data/mannequin_refine_dataset.py`](data/mannequin_refine_dataset.py)
 - [`engine/trainer_refiner.py`](engine/trainer_refiner.py)
 - [`configs/mgmi_refiner_train.yaml`](configs/mgmi_refiner_train.yaml)
 - [`configs/mgmi_refiner_train_prior.yaml`](configs/mgmi_refiner_train_prior.yaml)
 
-### Data preparation and evaluation
+### 数据准备与评估
 
 - [`scripts/prepare_simwarp_new.py`](scripts/prepare_simwarp_new.py)
 - [`scripts/prepare_priors_dataset.py`](scripts/prepare_priors_dataset.py)
 - [`reduced_core/compare/eval_left_right_vda_prior.py`](reduced_core/compare/eval_left_right_vda_prior.py)
 
-### Additional notes
+### 补充说明
 
-- [`reduced_core/README_REDUCED.md`](reduced_core/README_REDUCED.md): minimal package notes
-- [`docs/reports/Agent_depth_warp_vs-CN.md`](docs/reports/Agent_depth_warp_vs-CN.md): Chinese technical summary of the current library
+- [`reduced_core/README_REDUCED.md`](reduced_core/README_REDUCED.md)：最小部署版说明
+- [`docs/reports/Agent_depth_warp_vs-CN.md`](docs/reports/Agent_depth_warp_vs-CN.md)：当前库的中文技术总结
 
-## Repository Layout
+## 仓库结构
 
 ```text
 depth_warp_vs/
 ├── README.md
-├── assets/readme/                  # figures used by this README
-├── assets/raw/                     # large example assets kept out of root
-├── docs/reports/                   # project reports and technical notes
-├── configs/                        # training / inference configs
-├── data/                           # datasets, camera tools, refine dataset
-├── engine/                         # training and evaluation loops
-├── legacy/                         # archived or superseded entry scripts
-├── models/                         # splatting, refiner, losses, geometry
-├── reduced_core/                   # minimal warp + refiner + fusion path
-├── runtime/                        # service / runtime-related code
-├── scripts/                        # data prep, training, export, demos
-├── tools/                          # analysis, debug, streaming, utility scripts
+├── assets/readme/                  # README 使用的图示
+├── assets/raw/                     # 体积较大的示例素材
+├── docs/reports/                   # 项目报告与技术说明
+├── configs/                        # 训练/推理配置
+├── data/                           # 数据集、相机工具与 refiner 数据组织
+├── engine/                         # 训练与评估循环
+├── legacy/                         # 已归档或被替代的旧入口
+├── models/                         # splatting、refiner、loss、geometry 等模块
+├── reduced_core/                   # 精简版 warp + refiner + fusion 管线
+├── runtime/                        # 服务化 / 运行时相关代码
+├── scripts/                        # 数据准备、训练、导出、演示脚本
+├── tools/                          # 分析、调试、流式处理等工具
 ├── third_party/Video-Depth-Anything
-├── workspace/                      # local experiments / large temporary assets
+├── workspace/                      # 本地实验与临时大文件
 └── tests/
 ```
 
-## Installation
+## 安装
 
-The repository root itself is the Python package `depth_warp_vs`, so the safest way is to run commands from its parent directory.
+仓库根目录本身就是 Python 包 `depth_warp_vs`，最稳妥的方式是在它的父目录下运行命令。
 
-### 1. Install dependencies
+### 1. 安装依赖
 
-From the parent directory of this repo:
+在本仓库的父目录中执行：
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
 pip install -r depth_warp_vs/requirements.txt
 ```
 
-If you only want the minimal inference pipeline, the dependency list in [`reduced_core/depth_warp_vs/requirements.txt`](reduced_core/depth_warp_vs/requirements.txt) is enough for most cases.
+如果你只需要最小推理流程，那么 [`reduced_core/depth_warp_vs/requirements.txt`](reduced_core/depth_warp_vs/requirements.txt) 通常已经足够。
 
-### 2. Optional components
+### 2. 可选组件
 
-- [Video-Depth-Anything](third_party/Video-Depth-Anything) for monocular video depth estimation
-- `mediapipe` for lightweight person segmentation / keypoints
-- `sam2` plus local checkpoints for stronger segmentation priors
-- `torch-scatter` for splatting acceleration fallback paths
+- [Video-Depth-Anything](third_party/Video-Depth-Anything)：用于单目视频深度估计
+- `mediapipe`：用于轻量级人物分割与关键点
+- `sam2` 及本地权重：用于更强的人体先验分割
+- `torch-scatter`：作为 splatting 相关加速的可选依赖
 
-## Quick Start
+## 快速开始
 
-### Single-image novel-view generation
+### 单张图像新视角生成
 
-Recommended path: run the minimal pipeline in `reduced_core/`.
+推荐路径是运行 `reduced_core/` 中的最小管线：
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -135,17 +130,17 @@ python -m depth_warp_vs.main \
   --out /path/to/output.png
 ```
 
-Useful options:
+常用选项：
 
-- `--num_per_side`: number of synthesized views on each side
-- `--tx_max` or `--max_disp_px`: target view strength
-- `--manual_K fx,fy,cx,cy`: explicit intrinsics
-- `--warp_edge_sharpen`: cut ambiguous boundary pixels before warp
-- `--refiner_use_pollute`: enable `pollute` band channel
-- `--prior_person_seg`: add person segmentation prior
-- `--save_views_dir`: save all generated views before fusion
+- `--num_per_side`：左右两侧各生成多少个视图
+- `--tx_max` 或 `--max_disp_px`：目标视差强度
+- `--manual_K fx,fy,cx,cy`：手动指定内参
+- `--warp_edge_sharpen`：在投影前裁掉模糊边界像素
+- `--refiner_use_pollute`：启用 `pollute` 通道
+- `--prior_person_seg`：叠加人物分割先验
+- `--save_views_dir`：保存融合前的所有生成视图
 
-### Video inference
+### 视频推理
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -162,14 +157,14 @@ python -m depth_warp_vs.main \
   --ffmpeg_h264
 ```
 
-### Folder-mode inference
+### 文件夹模式推理
 
-The folder should contain:
+文件夹中建议包含：
 
-- `frame_xxx.png` or `frame_xxx.jpg`
+- `frame_xxx.png` 或 `frame_xxx.jpg`
 - `depth/depth_xxx.png`
 
-Then run:
+然后执行：
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -180,11 +175,11 @@ python -m depth_warp_vs.main \
   --out /path/to/out.mp4
 ```
 
-## Training
+## 训练
 
-The current refiner training pipeline is based on offline-generated warp samples.
+当前 refiner 的训练流程建立在离线生成的 warp 样本之上。
 
-### 1. Prepare simulated warp / hole / pollute data
+### 1. 准备模拟 warp / hole / pollute 数据
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -193,14 +188,14 @@ python depth_warp_vs/scripts/prepare_simwarp_new.py \
   --splits train,validation,test
 ```
 
-This stage prepares clip folders that contain:
+这一阶段会生成如下内容：
 
 - `sim_warp/`
 - `hole_mask/`
 - `pollute_mask/`
 - `edit_mask/`
 
-### 2. Optional: prepare human priors
+### 2. 可选：准备人体先验
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -211,13 +206,13 @@ python depth_warp_vs/scripts/prepare_priors_dataset.py \
   --sam2_ckpt /path/to/sam2_checkpoint.pt
 ```
 
-This generates optional:
+可生成的附加先验包括：
 
 - `prior_person_seg/`
 - `prior_parsing/`
 - `prior_keypoints/`
 
-### 3. Train the 6-channel baseline refiner
+### 3. 训练 6 通道 baseline refiner
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -226,11 +221,11 @@ python -m depth_warp_vs.scripts.train_refiner \
   --config /Users/yjy/Desktop/3DView/Zhan/depth_warp_vs/configs/mgmi_refiner_train.yaml
 ```
 
-Baseline input contract:
+baseline 输入约定为：
 
 `[Iw(3), hole(1), valid(1), pollute(1)]`
 
-### 4. Train the 7-channel prior model
+### 4. 训练 7 通道先验模型
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -239,13 +234,13 @@ python -m depth_warp_vs.scripts.train_refiner \
   --config /Users/yjy/Desktop/3DView/Zhan/depth_warp_vs/configs/mgmi_refiner_train_prior.yaml
 ```
 
-Current prior training config uses:
+当前先验配置使用：
 
 `[Iw(3), hole(1), valid(1), pollute(1), seg(1)]`
 
-## Evaluation
+## 评估
 
-The repo includes an external validation script that uses left/right views as pseudo-ground-truth pairs and can optionally estimate depth with Video-Depth-Anything.
+仓库中提供了一个使用左右视图作为伪真值对的验证脚本，也支持配合 Video-Depth-Anything 估计深度：
 
 ```bash
 cd /Users/yjy/Desktop/3DView/Zhan
@@ -255,82 +250,19 @@ python depth_warp_vs/reduced_core/compare/eval_left_right_vda_prior.py \
   --out_dir /path/to/eval_out
 ```
 
-Typical outputs:
+典型输出包括：
 
 - `metrics_summary.json`
-- `comparison_panel.png`
-- `baseline_best_view.png`
-- `prior_fair_view.png`
+- 各视图定量指标
+- 左右视图对比可视化
 
-## Current Design Choices
+## 适用场景
 
-The latest code path in this repo is organized around the following idea:
+- 单目图像驱动的新视角生成
+- 裸眼 3D 显示内容生成
+- 基于深度先验的局部修复与视图补全
+- 面向部署的轻量级多视图生成流程
 
-- keep geometry explicit in the warp stage
-- represent uncertainty explicitly with masks
-- let the refiner repair only the risky regions
+## 说明
 
-In practice, this means the final novel view is computed as:
-
-`Ifinal = lerp(Iw, Ipred, mk_union)`
-
-where:
-
-- `Iw` is the warped image
-- `mk_union` is usually `hole ∪ pollute`
-- `Ipred` is the refiner output
-
-This design improves locality and efficiency, but it also means the method is still strongly limited by depth quality and visibility reasoning.
-
-## Known Limitations
-
-This repository is research code and still exposes several limitations that matter in real scenes:
-
-- Strong dependence on sharp, well-aligned depth boundaries
-- Face/body interior may remain too similar to the source view when most pixels are still marked visible
-- Large self-occlusion reveals regions that are fundamentally missing in single-view input
-- Training/inference mismatch can significantly degrade quality
-- Adding priors without matching the training distribution can cause severe OOD failures
-
-The repo already contains experiments on:
-
-- `valid` mask input
-- `pollute` band supervision
-- warp-edge sharpening
-- segmentation / parsing / keypoint priors
-- left/right-view external evaluation
-
-## Recommended Reading Order
-
-If you want to understand the code quickly, read in this order:
-
-1. [`reduced_core/depth_warp_vs/main.py`](reduced_core/depth_warp_vs/main.py)
-2. [`reduced_core/depth_warp_vs/models/splatting/softmax_splat.py`](reduced_core/depth_warp_vs/models/splatting/softmax_splat.py)
-3. [`reduced_core/depth_warp_vs/models/refiner/MGMI.py`](reduced_core/depth_warp_vs/models/refiner/MGMI.py)
-4. [`data/mannequin_refine_dataset.py`](data/mannequin_refine_dataset.py)
-5. [`engine/trainer_refiner.py`](engine/trainer_refiner.py)
-6. [`configs/mgmi_refiner_train.yaml`](configs/mgmi_refiner_train.yaml)
-7. [`configs/mgmi_refiner_train_prior.yaml`](configs/mgmi_refiner_train_prior.yaml)
-
-## Citation
-
-If you use this repository in academic work, please cite the corresponding paper once the bibliographic entry is finalized.
-
-For now, please also cite the third-party depth estimator if you use it:
-
-- [Video-Depth-Anything](https://github.com/DepthAnything/Video-Depth-Anything)
-
-## Acknowledgements
-
-- Softmax splatting / depth-guided warping literature
-- Video-Depth-Anything for monocular depth estimation experiments
-- MediaPipe and SAM2 for optional human priors
-
-## Contact
-
-Issues and pull requests are welcome for:
-
-- bug fixes
-- cleaner training / evaluation protocols
-- improved prior integration
-- better README and examples
+本仓库强调“先基于深度完成可解释的视图投影，再只对局部不可靠区域做修复”的设计思路，适合研究型验证，也适合逐步向工程推理路径收缩。
