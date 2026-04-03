@@ -32,6 +32,12 @@
 
 ![Realtime Demo](assets/readme/realtime_demo.png)
 
+### 会场实拍
+
+下图展示了该系统在会场中的实际展示效果，可作为裸眼 3D 视频通话场景下的落地示例。
+
+![Venue Demo](assets/readme/venue_demo.jpg)
+
 ## 主要特点
 
 - 基于深度引导的单目新视角生成
